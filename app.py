@@ -1,33 +1,32 @@
 import streamlit as st
 import tensorflow as tf
-import numpy as np
 from PIL import Image
+import numpy as np
 
-# Set Streamlit configuration
-st.set_option('deprecation.showfileUploaderEncoding', False)
+# Es ist nicht mehr notwendig, die folgende Option zu setzen, da sie veraltet ist.
+# st.set_option('deprecation.showfileUploaderEncoding', False)
 
 @st.cache(allow_output_mutation=True)
 def load_model():
-    # Load the Keras model
-    model = tf.keras.models.load_model('./flower_model_trained.hdf5')
+    # Laden Sie das Modell ohne die Verlustfunktion und kompilieren Sie es erneut.
+    model = tf.keras.models.load_model('./flower_model_trained.hdf5', compile=False)
+    # Definieren Sie hier Ihre Verlustfunktion, Optimizer und Metriken
+    # Beispiel: 
+    model.compile(optimizer='adam', loss='categorical_crossentropy')
     return model
 
 def predict_class(image, model):
-    # Preprocess the image
-    image = Image.open(image).convert('RGB') # Convert to RGB in case it's a different mode
-    image = image.resize((180, 180))         # Resize the image
-    image_array = np.array(image)            # Convert image to numpy array
-    image_array = tf.keras.applications.mobilenet_v2.preprocess_input(image_array) # Preprocess input
-    image_array = np.expand_dims(image_array, axis=0)
+    image = Image.open(image).convert('RGB')  # Konvertieren in RGB
+    image = image.resize((180, 180))          # Bildgröße anpassen
+    image_array = np.array(image)             # In ein Numpy-Array konvertieren
+    image_array = tf.keras.applications.mobilenet_v2.preprocess_input(image_array) # Bild vorverarbeiten
+    image_array = np.expand_dims(image_array, axis=0)  # Dimension erweitern
 
-    # Make the prediction
-    prediction = model.predict(image_array)
+    prediction = model.predict(image_array)  # Vorhersage durchführen
     return prediction
 
-# Load the model
 model = load_model()
 
-# Streamlit UI code
 st.title('Flower Classifier')
 
 file = st.file_uploader("Upload an image of a flower", type=["jpg", "png"])
@@ -38,20 +37,14 @@ else:
     slot = st.empty()
     slot.text('Running inference....')
 
-    # Display the uploaded image
     test_image = Image.open(file)
     st.image(test_image, caption="Input Image", width=400)
 
-    # Make a prediction
     pred = predict_class(file, model)
 
-    # Define class names
     class_names = ['daisy', 'dandelion', 'rose', 'sunflower', 'tulip']
-
-    # Get the predicted class
     result = class_names[np.argmax(pred)]
 
-    # Display the result
     output = 'The image is a ' + result
     slot.text('Done')
     st.success(output)
