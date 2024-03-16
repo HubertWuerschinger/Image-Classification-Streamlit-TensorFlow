@@ -1,28 +1,26 @@
 import streamlit as st
 import tensorflow as tf
+import h5py  # Für HDF5-Version
 from PIL import Image
 import numpy as np
 
-# Es ist nicht mehr notwendig, die folgende Option zu setzen, da sie veraltet ist.
-# st.set_option('deprecation.showfileUploaderEncoding', False)
+# Zeige TensorFlow und HDF5-Versionen an
+st.text(f"TensorFlow Version: {tf.__version__}")
+st.text(f"HDF5 Version: {h5py.__version__}")
 
 @st.cache(allow_output_mutation=True)
 def load_model():
-    # Laden Sie das Modell ohne die Verlustfunktion und kompilieren Sie es erneut.
     model = tf.keras.models.load_model('./flower_model_trained.hdf5', compile=False)
-    # Definieren Sie hier Ihre Verlustfunktion, Optimizer und Metriken
-    # Beispiel: 
-    model.compile(optimizer='adam', loss='categorical_crossentropy')
     return model
 
 def predict_class(image, model):
-    image = Image.open(image).convert('RGB')  # Konvertieren in RGB
-    image = image.resize((180, 180))          # Bildgröße anpassen
-    image_array = np.array(image)             # In ein Numpy-Array konvertieren
-    image_array = tf.keras.applications.mobilenet_v2.preprocess_input(image_array) # Bild vorverarbeiten
-    image_array = np.expand_dims(image_array, axis=0)  # Dimension erweitern
+    image = Image.open(image).convert('RGB')
+    image = image.resize((180, 180))
+    image_array = np.array(image)
+    image_array = tf.keras.applications.mobilenet_v2.preprocess_input(image_array)
+    image_array = np.expand_dims(image_array, axis=0)
 
-    prediction = model.predict(image_array)  # Vorhersage durchführen
+    prediction = model.predict(image_array)
     return prediction
 
 model = load_model()
